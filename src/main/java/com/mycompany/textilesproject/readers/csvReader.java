@@ -114,6 +114,12 @@ public class csvReader {
         Map <Integer,  Map < String, Double >> salesPerYear_Map =
                 (new FractionalSalesCalculator (dataItemList) ).getFractionalSalesPerYear();
         
+        Map <String, Double > Nu_i = (new SlopeCalculator(dataItemList)).getSlopes();
+        
+        Map<String, Map<Integer, Double>>  cost_Map = (new SlopeCalculator(dataItemList)).getCosts();
+        
+        Map <Integer,  Map < String, Double >> rawSalesPerYear_Map = getRawSales (dataItemList) ;
+        
         FractionalCharecterCalculator fractionalCharecterCalculator  = new FractionalCharecterCalculator (  characterRangeList);
         Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map = 
                 fractionalCharecterCalculator.getFractionalCharacterRangeList();
@@ -124,11 +130,76 @@ public class csvReader {
         squareTermCalculator.getMIT_map( salesPerYear_Map);
         squareTermCalculator.getNIT_map( salesPerYear_Map, V_Map);
         squareTermCalculator.getMITJ_Map(fractionalCharaecters_Map);
+        
         squareTermCalculator.getSITJ_star_Map(fractionalCharaecters_Map, V_Map);
+        
+        
         squareTermCalculator.getIS_map(V_Map, normalizedFractionalCharacters_Map);
         squareTermCalculator.getTITJ_star_Map(normalizedFractionalCharacters_Map);
         
-        System.out.println("Completed.") ;
+        squareTermCalculator.getNIJT_Map (   fractionalCharaecters_Map,  V_Map);
+        squareTermCalculator.getSITJ_star_Map_Alternate(V_Map, salesPerYear_Map);
+        
+        squareTermCalculator.getMPjt_map(fractionalCharaecters_Map, normalizedFractionalCharacters_Map, V_Map);
+        
+        squareTermCalculator.getSIT_Star(salesPerYear_Map,    V_Map);
+        
+        squareTermCalculator.getQIJT_map(fractionalCharaecters_Map);
+        squareTermCalculator.getJIT_map (  fractionalCharaecters_Map,  Nu_i );
+        
+        //Histograms.getNIT_histogram(squareTermCalculator.nit_map);
+        
+        //CorrelationCalculator.findCorrelSV(V_Map, salesPerYear_Map);
+        //CorrelationCalculator.findCorrelS_NU(salesPerYear_Map, Nu_i);
+        
+        //Histograms.getSIJT_histogram (fractionalCharaecters_Map) ;
+        //Histograms.getSIT_histogram(salesPerYear_Map);
+        //Histograms.get_Nu_it_histogram(Nu_i);
+        //Histograms.getNIJT_yearly_histogram(squareTermCalculator.nijt_map);
+        //Histograms.getNIJT_companywise_histogram(squareTermCalculator.nijt_map);
+        //Histograms.get_ISit_histogram(squareTermCalculator.IS_it);
+        
+        //Histograms.getVIT_SIT_mean_histogram(V_Map, salesPerYear_Map);
+        //Histograms.getISIT_mean_histogram(squareTermCalculator.IS_it);
+        //Histograms.getNIT_histogram( squareTermCalculator.nit_map);
+        //Histograms.getNIT_mean_histogram( squareTermCalculator.nit_map);
+        //Histograms.getSIJT_histogram(   fractionalCharaecters_Map);
+        //Histograms.getSIT_Star_histogram(squareTermCalculator.sit_star_map);
+        
+        /*Histograms . get5Stats_perYear (  squareTermCalculator.IS_it,
+                                          squareTermCalculator.  nit_map ,
+                                           salesPerYear_Map ,
+                                            V_Map,rawSalesPerYear_Map,
+                                            cost_Map, "Suryalakshmi Cotton Mills Ltd." )        ;*/
+        
+        //Histograms.getMultiReression(salesPerYear_Map /* small s */ ,
+                                 //    rawSalesPerYear_Map, /*big S*/
+                                   //  cost_Map, /* C */
+                                  //   characterRangeList,"Welspun India Ltd.") ;
+                                  
+        //Histograms.getNIT_histogram(squareTermCalculator.jit_map) ;
+        //Histograms.getQIJT_yearly_histogram (squareTermCalculator.qijt_map) ;
+        //Histograms.getQIJT_yearly_histogram (squareTermCalculator.pijt_map) ;
+        
+          
+        TableCreator table = new TableCreator (
+        squareTermCalculator.qijt_map,
+        V_Map ,
+        Nu_i,
+        cost_Map,
+        salesPerYear_Map,
+        squareTermCalculator.jit_map,
+        squareTermCalculator.IS_it,
+        squareTermCalculator.nit_map,rawSalesPerYear_Map ,dataItemList);
+        table.createtables();
+        
+        //Grapher.getNu_stats(Nu_i);
+        //Grapher. getVIT_stats (    V_Map);
+        //Grapher.getSIT_stats(salesPerYear_Map);
+        //Grapher.getNIT_stats( squareTermCalculator.nit_map);
+        //Grapher.getNIJT_stats(squareTermCalculator.nijt_map,  "Garware Technical Fibres Ltd.", squareTermCalculator.nit_map);
+        
+        System.out.println("Completed.") ;  
         
     } //end main
     
@@ -253,7 +324,35 @@ public class csvReader {
         return companysWithNotEnoughData;
     }
     
+   
+    private static Map <Integer,  Map < String, Double >> getRawSales (Map <String, List<Map <String, String>>> dataItemList) {
+        Map <Integer,  Map < String, Double >> result = new HashMap <Integer,  Map < String, Double >> ();
+        
+        for (int thisYear = START_YEAR; thisYear <= END_YEAR; thisYear ++) {
+            
+        
+            for (Map.Entry <String, List<Map <String, String>>> entry : dataItemList.entrySet()){
+                String thisCompnay = entry.getKey();
+                for (  Map<String, String> tuple : entry.getValue()){
+                    int year  = Integer.parseInt(tuple.get( "Year"));
+                    if (thisYear== year){
+                        //
+                        Double rawSales =  Double.parseDouble(tuple.get( "Sales"));
+
+                        if (null==result.get(year)) result.put (year, new HashMap < String, Double >());
+                        Map < String, Double > map = result.get(year);
+                        map.put (thisCompnay, rawSales) ;
+                        result.put (year, map) ;
+
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
     
+       
 
     
 }//end class

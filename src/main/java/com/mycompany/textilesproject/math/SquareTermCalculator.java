@@ -6,12 +6,16 @@
 package com.mycompany.textilesproject.math;
 
 import static com.mycompany.textilesproject.Constants.*;
+import com.mycompany.textilesproject.Parameters;
 import static com.mycompany.textilesproject.Parameters.END_YEAR;
+import static com.mycompany.textilesproject.Parameters.NUM_CHARECTERS;
 import static com.mycompany.textilesproject.Parameters.START_YEAR;
+import static java.lang.System.exit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  *
@@ -21,13 +25,133 @@ public class SquareTermCalculator {
     
     public Map<Integer, Map<String, Double>>  mit_map   = new HashMap <Integer ,Map<String, Double>>  () ;
     public Map<Integer, Map<String, Double>>  nit_map  = new HashMap <Integer ,Map<String, Double>>  () ;
+    public Map<Integer, Map<String, Double>>  sit_star_map  = new HashMap <Integer ,Map<String, Double>>  () ;
+    
+    public Map<Integer, TreeMap<String, List<Double>>>  nijt_map  = new TreeMap <Integer ,TreeMap<String, List<Double>>>  () ;
+    public Map<Integer, TreeMap<String, List<Double>>>  qijt_map  = new TreeMap <Integer ,TreeMap<String, List<Double>>>  () ;
+    public Map<Integer, TreeMap<String, List<Double>>>  pijt_map  = new TreeMap <Integer ,TreeMap<String, List<Double>>>  () ;
+    public Map<Integer, Map<String, Double>>  jit_map  = new TreeMap <Integer ,Map<String, Double>>  () ;
+   
     
     public Map <Integer, Map< String,  List<Double>> >  mitj_map = new HashMap <Integer, Map< String,  List<Double>> >();
     public Map <Integer, Map< String,  List<Double>> > sitj_star_map = new HashMap <Integer, Map< String,  List<Double>> >();
     
+     public Map <Integer, Map< String,  Map<Integer,Double>> > sitj_star_map_alternate = 
+             new HashMap <Integer, Map< String,  Map<Integer,Double>> >();
+    
     public Map <String , Map< Integer,  Double> > IS_it = new HashMap <String , Map< Integer,  Double> >();
     
     public Map <String , Map< Integer,  List<Double>> > titj_star_map = new HashMap <String, Map<Integer ,  List<Double>> >();
+    
+    public Map<Integer,  List< Double>>  MPjt_map   = new HashMap<Integer,  List< Double>>   () ;
+    
+    public void getMPjt_map (Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map,
+                             Map <String, Map<Integer,  List<Double>> > normalizedFractionalCharacters_Map,
+                             Map<String, Map<Integer, Double>>  V_Map) {
+        
+        for (Integer  year =START_YEAR ; year <= END_YEAR;year++){
+            
+            List<String> cmpaniesForThisYear = getCompaniesForThisYear(year, fractionalCharaecters_Map) ;
+            final int numCompanies =  cmpaniesForThisYear.size();
+            if (ZERO==numCompanies)continue;
+            
+            List<Double> value = new ArrayList<Double>();
+            
+            for (int jj=ZERO; jj < NUM_CHARECTERS; jj++) {
+                Double value_at_jj = DOUBLE_ZERO;
+                for (String companyName : cmpaniesForThisYear){
+                    double vit = V_Map.get (companyName).get ( year);
+                    List< Double> fractionalChars = fractionalCharaecters_Map.get (companyName ).get (year );
+                    List< Double> normalizedFractionalChars = normalizedFractionalCharacters_Map.get (companyName ).get (year );
+                    value_at_jj += vit * fractionalChars.get(jj)* normalizedFractionalChars.get(jj);
+                }     
+                value.add (value_at_jj );
+            }
+            
+            MPjt_map.put (year,value );
+        }    
+        
+    }
+    
+    
+    public void getJIT_map (Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map,
+                            Map <String, Double > Nu_i ) {
+        for (Integer  year =START_YEAR ; year <= END_YEAR;year++){
+            List<String> cmpaniesForThisYear = getCompaniesForThisYear(year, fractionalCharaecters_Map) ;
+            final int numCompanies =  cmpaniesForThisYear.size();
+            if (ZERO==numCompanies)continue;
+                
+            for (String companyName : cmpaniesForThisYear){
+                
+                double jit = ZERO;
+                double numerator = ZERO;
+                double denominator = ZERO;
+                
+                List<Double> charecters = fractionalCharaecters_Map.get (companyName) .get (year);
+                final int numCHars = charecters.size();
+                
+                for (int jj = ZERO; jj< numCHars; jj ++){
+                    if (this.qijt_map.get( year).get(companyName ).get(jj)>= ZERO){
+                        numerator += this.qijt_map.get( year).get(companyName ).get(jj);
+                    }
+                    denominator += fractionalCharaecters_Map.get (companyName) .get (year).get(jj);
+                }
+                
+                jit = ( Nu_i.get(companyName )* numerator)/denominator;
+                Map<String, Double > inner = this.jit_map.get(year);
+                if (null == inner)  inner = new TreeMap<String, Double >();
+                inner.put (companyName, jit);
+                this.jit_map.put(year, inner);
+                
+            }
+        }
+        
+    }
+    
+    public void getQIJT_map (Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map) {
+        for (Integer  year =START_YEAR ; year <= END_YEAR;year++){
+            List<String> cmpaniesForThisYear = getCompaniesForThisYear(year, fractionalCharaecters_Map) ;
+            final int numCompanies =  cmpaniesForThisYear.size();
+            if (ZERO==numCompanies)continue;
+                
+            for (String companyName : cmpaniesForThisYear){
+                List<Double> charecters = fractionalCharaecters_Map.get (companyName) .get (year);
+                final int numCHars = charecters.size();
+                List<Double> newCharecterList_q = new ArrayList<Double>();
+                List<Double> newCharecterList_p = new ArrayList<Double>();
+                
+                for (int jj = ZERO; jj< numCHars; jj ++){
+                    double qijt = ZERO;
+                    for (int kk = ZERO; kk< numCHars; kk ++){
+                        if (kk!=jj){
+                            double val = fractionalCharaecters_Map.get (companyName) .get (year).get(kk);
+                            qijt += val*val;
+                        }
+                    }
+                    double val = fractionalCharaecters_Map.get (companyName) .get (year).get(jj);
+                    qijt = val*val - (qijt/(numCHars-ONE));
+                    newCharecterList_q.add ( qijt );
+                    if (qijt>=ZERO){
+                        newCharecterList_p.add ( qijt / val);
+                    }else {
+                        newCharecterList_p.add (Double.NaN);
+                    }
+                }
+                
+                TreeMap<String,  List<Double>> innerMap_q = qijt_map.get ( year) ;
+                if (null==innerMap_q) innerMap_q = new TreeMap<String,  List<Double>>();
+                innerMap_q.put (companyName, newCharecterList_q) ;
+                qijt_map.put (year, innerMap_q);
+                
+                TreeMap<String,  List<Double>> innerMap_p = pijt_map.get ( year) ;
+                if (null==innerMap_p) innerMap_p = new TreeMap<String,  List<Double>>();
+                innerMap_p.put (companyName, newCharecterList_p) ;
+                pijt_map.put (year, innerMap_p);
+                
+            }
+        }
+    }
+    
     
     
     public void getIS_map (Map<String, Map<Integer, Double>>  V_Map,
@@ -56,6 +180,47 @@ public class SquareTermCalculator {
         
     }
     
+    public void getSIT_Star (Map <Integer,  Map < String, Double >> salesPerYear_Map, 
+                             Map<String, Map<Integer, Double>>  V_Map ) {
+        //
+        for (Integer  year =START_YEAR ; year <= END_YEAR;year++){
+            int numCampanies = salesPerYear_Map.get(year).keySet().size();
+            for (String companyName : salesPerYear_Map.get(year).keySet()){
+                
+                double numerator = ZERO;
+                for (String innerCompanyName : salesPerYear_Map.get(year).keySet()){
+                    if (innerCompanyName.equals(companyName )) continue;
+                    double skt = salesPerYear_Map.get(year).get(innerCompanyName );
+                    numerator += skt*skt * V_Map.get(innerCompanyName ).get( year);
+                    
+                    //System.out.println("Skt "+ skt + " vkt "+V_Map.get(innerCompanyName ).get( year) + " numerator "+ numerator);
+                    
+                }
+                
+                numerator = numerator/(ONE - numCampanies);
+                //System.out.println("numCampanies "+ numCampanies);
+                
+                //System.out.println("sit "+ salesPerYear_Map.get(year).get(companyName )) ;
+                //System.out.println("vit " +  V_Map.get(companyName ).get( year) );
+                        
+                double sit_star = salesPerYear_Map.get(year).get(companyName ) +
+                        (numerator / (V_Map.get(companyName ).get( year) * salesPerYear_Map.get(year).get(companyName ))) ;
+                
+                 
+                
+                if (sit_star_map.get(year )==null) {
+                    Map<String, Double> yearmap = new HashMap<String, Double> ();
+                    sit_star_map.put (year, yearmap) ;
+                }
+                Map<String, Double> yearmap = sit_star_map.get(year );
+                yearmap.put (companyName, sit_star) ; 
+                sit_star_map.put(year ,yearmap );
+                
+            }
+        }
+        
+    }
+    
     public void getTITJ_star_Map( Map <String, Map<Integer,  List<Double>> > normalizedFractionalCharacters_Map){
         for (String companyName : normalizedFractionalCharacters_Map.keySet()){
             for (Integer year : normalizedFractionalCharacters_Map.get(companyName).keySet()){
@@ -68,7 +233,31 @@ public class SquareTermCalculator {
         }
     }
     
-   
+    public void getSITJ_star_Map_Alternate (Map<String, Map<Integer, Double>>  V_Map,  
+                                            Map <Integer,  Map < String, Double >> salesPerYear_Map) {
+        //
+        for (Integer  year :nijt_map.keySet()){            
+            
+            for (String companyName : nijt_map.get(year).keySet()){
+                List<Double> values = nijt_map.get(year).get( companyName);
+                for (int jj = ZERO; jj < values.size(); jj++){
+                    Double nijt = values.get(jj);
+                    double vit = V_Map.get(companyName).get(year);
+                    double sit = salesPerYear_Map.get(year).get(companyName);
+                    if (nijt<=ZERO || vit*sit  <= ZERO){
+                        
+                    }else {
+                        double sijt_alternate = nijt /(vit*sit) ;
+                        //insert into alternate map
+                        insertInto_AlternateSIJT_Map (year,companyName, jj,  sijt_alternate) ;
+                    }
+                }
+            }
+            
+        }
+    }
+    
+
     
     public void getSITJ_star_Map ( Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map,  
                                    Map<String, Map<Integer, Double>>  V_Map) {
@@ -85,17 +274,12 @@ public class SquareTermCalculator {
                 for (int jj = ZERO; jj< charecters.size(); jj ++){
                     double squareterm = ZERO;
                      
-                    //System.err.println(  "squareterm init zero") ;
-                     
                     for (String thisName :cmpaniesForThisYear  ){
                         if (thisName.equals( companyName)) continue;
                          
                         double sijt = fractionalCharaecters_Map.get(thisName).get(year).get(jj);
                         squareterm += sijt*sijt * V_Map.get(thisName).get(year);
                         
-                        //System.err.println( V_Map.get(thisName).get(year)) ;
-                        //System.err.println(  sijt) ;
-                        //System.err.println(squareterm) ;
                         
                     }
                     double sijt =fractionalCharaecters_Map.get(companyName).get(year).get(jj);
@@ -108,18 +292,6 @@ public class SquareTermCalculator {
                 if (null==innerMap) innerMap = new HashMap<String,  List<Double>>();
                 innerMap.put (companyName, newCharecterList) ;
                 sitj_star_map.put (year, innerMap);
-                
-                //debug
-                /*boolean allNegative = true;
-                for (Double sijtvalue : newCharecterList){
-                    if (sijtvalue> ZERO)allNegative = false;
-                }
-                if (allNegative) {
-                    double vit = V_Map.get( companyName).get(year);
-                    List<Double> sit = fractionalCharaecters_Map.get(companyName).get(year);
-                    System.out.println("all sijt negative !" );
-                }*/
-                
                 
             }
             
@@ -182,7 +354,8 @@ public class SquareTermCalculator {
         }
     } 
             
-    public void getNIT_map ( Map <Integer,  Map < String, Double >> salesPerYear_Map,  Map<String, Map<Integer, Double>>  V_Map) {
+    public void getNIT_map ( Map <Integer,  Map < String, Double >> salesPerYear_Map,  
+                             Map<String, Map<Integer, Double>>  V_Map) {
         
         for (int year : salesPerYear_Map.keySet()){
             final int numCompanies =  salesPerYear_Map.get(year).keySet().size();
@@ -204,8 +377,50 @@ public class SquareTermCalculator {
              
         }
         
+         
+
         
     } 
+    
+    
+    public void getNIJT_Map ( Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map,
+                              Map<String, Map<Integer, Double>>  V_Map ) {
+        
+        for (Integer  year =START_YEAR ; year <= END_YEAR;year++){
+            List<String> cmpaniesForThisYear = getCompaniesForThisYear(year, fractionalCharaecters_Map) ;
+            final int numCompanies =  cmpaniesForThisYear.size();
+            if (ZERO==numCompanies)continue;
+                
+            for (String companyName : cmpaniesForThisYear){
+                
+                List<Double> charecters = fractionalCharaecters_Map.get (companyName) .get (year);
+                List<Double> newCharecterList = new ArrayList<Double>();
+                for (int jj = ZERO; jj< charecters.size(); jj ++){
+                    double squareterm = ZERO;
+                    for (String thisName :cmpaniesForThisYear  ){
+                        if (thisName.equals( companyName)) continue;
+                        
+                        double sijt = fractionalCharaecters_Map.get(thisName).get(year).get(jj);
+                        squareterm += sijt*sijt * V_Map.get(thisName).get(year);
+                        
+                    }
+                    double sijt = fractionalCharaecters_Map.get(companyName).get(year).get(jj);
+                    newCharecterList.add (sijt*sijt* V_Map.get(companyName).get(year) - (squareterm/ (numCompanies-ONE)) ) ;
+                }
+                
+                TreeMap<String,  List<Double>> innerMap = nijt_map.get ( year) ;
+                if (null==innerMap) innerMap = new TreeMap<String,  List<Double>>();
+                innerMap.put (companyName, newCharecterList) ;
+                nijt_map.put (year, innerMap);
+                
+                
+                
+            }
+            
+        }
+        
+    }
+    
     
     private List<String> getCompaniesForThisYear(int year, Map <String, Map<Integer,  List<Double>> >  fractionalCharaecters_Map) {
         List<String> result = new ArrayList<String> ();
@@ -237,6 +452,25 @@ public class SquareTermCalculator {
         }
         
         return result;
+    }
+    
+    private void insertInto_AlternateSIJT_Map (int year, String companyName, int jj, double  sijt_alternate) {
+        //
+        //Map <Integer, Map< String,  Map<Integer,Double>> > sitj_star_map_alternate
+        Map< String,  Map<Integer,Double>> map = sitj_star_map_alternate.get( year);
+        if (null == map){
+            map = new HashMap< String,  Map<Integer,Double>>();
+        }
+        sitj_star_map_alternate.put (year, map);
+        
+        Map<Integer,Double>  innerMap = map.get(companyName) ;
+        if (null== innerMap){
+            innerMap = new HashMap<Integer,Double>();
+        }
+        map.put (companyName, innerMap);
+        
+        innerMap.put (jj, sijt_alternate) ;        
+        
     }
     
 }

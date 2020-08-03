@@ -7,6 +7,7 @@ package com.mycompany.textilesproject.math;
 
 import static com.mycompany.textilesproject.Constants.*;
 import static com.mycompany.textilesproject.Parameters.*;
+import static java.lang.System.exit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,11 @@ public class SlopeCalculator {
                  double cost = sales - profit;
                  double valueForInsertion = ONE - slope * (cost/sales) ;
                  
+                 if (ZERO==sales) {
+                     System.err.println("error: Sales is zero !!");
+                     exit (ONE);
+                 }
+                 
                  innerMap.put (thisYear,valueForInsertion ) ;
              }
              
@@ -50,10 +56,12 @@ public class SlopeCalculator {
              
          }
          
+         
+         
          return result;
      }
      
-     private  Map <String, Double > getSlopes (){
+     public  Map <String, Double > getSlopes (){
          Map <String, Double >  result = new HashMap   <String, Double > ();
          
          for (Map.Entry <String, List<Map <String, String>>> entry: dataItemList.entrySet()){
@@ -64,6 +72,35 @@ public class SlopeCalculator {
              
          return result;
      }
+     
+     
+     public Map<String, Map<Integer, Double>> getCosts () {
+         Map<String, Map<Integer, Double>> result = new HashMap<String, Map<Integer, Double>>();
+         for (Map.Entry <String, List<Map <String, String>>> entry : dataItemList.entrySet()){
+             
+             String companyName = entry.getKey() ;
+             Map<Integer, Double> innerMap = new HashMap<Integer, Double> ();
+             
+             for ( Map <String, String> dataPoint : entry.getValue()    ){
+                 int thisYear  = Integer.parseInt(dataPoint.get( "Year"));
+                 double sales =Double.parseDouble(dataPoint.get( "Sales"));
+                 double profit =  Double.parseDouble( dataPoint.get( "Cash Profit"));     
+                 double cost = sales - profit;
+                 
+                 if (ZERO==sales) {
+                     System.err.println("error: Sales is zero !!");
+                     exit (ONE);
+                 }
+                 
+                 innerMap.put (thisYear,cost ) ;
+             }
+             
+             result.put (companyName, innerMap) ;
+             
+         }
+         return result;
+     }
+     
      
      private Double getSlope (List<Map <String, String>> dataPoints){
          regressionEngine = new SimpleRegression ();
