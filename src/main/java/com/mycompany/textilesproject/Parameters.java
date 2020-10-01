@@ -226,7 +226,7 @@ public class Parameters {
             } 
         }; 
  
-    public static final  ArrayList<String> companiesOfInterest =   companiesOfInterest_Complete_List       ;
+    public static final  ArrayList<String> companiesOfInterest =       companiesOfInterest_Set_One    ;
     
     public static final  ArrayList<String> columnsOfInterest = new ArrayList<String>() { 
             { 
